@@ -1,0 +1,14 @@
+{
+	"authors": [
+		"dani"
+	],
+	"copyright": "Copyright © 2024, dani",
+	"dependencies": {
+		"ddbc": "~>0.6.0",
+		"vibe-d": "~>0.10.0",
+		"odbc": "~>1.0.0"
+	},
+	"description": "A minimal D application.",
+	"license": "proprietary",
+	"name": "sql-d"
+}
