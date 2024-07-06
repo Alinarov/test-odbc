@@ -3,6 +3,7 @@ import odbc.sqlext;
 import odbc.sqlucode;
 import odbc.sqltypes;
 import std.stdio;
+import std.conv:to;
 import std.string : fromStringz, toStringz;
 
 version(Windows) {
@@ -12,6 +13,7 @@ version(Windows) {
 }
 
 alias SQLLEN = int;  // Usamos `int` en lugar de `long` para SQLLEN
+
 
 SQLHENV env = SQL_NULL_HENV;
 SQLHDBC conn = SQL_NULL_HDBC;
@@ -50,32 +52,54 @@ int main(string[] argv) {
         // Execute SQL query
         SQLHSTMT stmt = SQL_NULL_HSTMT;
         SQLAllocHandle(SQL_HANDLE_STMT, conn, &stmt);
-
         string query = "select * from registro_empleados";
         ret = SQLExecDirect(stmt, cast(SQLCHAR*) toStringz(query), SQL_NTS);
 
-        if (SQL_SUCCEEDED(ret)) {
-            SQLSMALLINT columns;
-            SQLNumResultCols(stmt, &columns);
+        string[][] respuesta_SQL; // Cambiamos a un arreglo de arreglos de strings para almacenar filas completas
 
+        if (SQL_SUCCEEDED(ret)) {
+            // Si la ejecución de la consulta SQL fue exitosa, continuamos.            
+            SQLSMALLINT columns;
+            // Declaramos una variable para almacenar el número de columnas en el resultado de la consulta.
+            SQLNumResultCols(stmt, &columns);
+            // Obtenemos el número de columnas en el resultado de la consulta y lo almacenamos en 'columns'.
             while (SQL_SUCCEEDED(ret = SQLFetch(stmt))) {
+                // Mientras la función SQLFetch retorne SQL_SUCCEEDED, continuamos iterando sobre las filas del resultado.
+                // SQLFetch recupera una fila de datos del conjunto de resultados.
+                string[] fila; // Arreglo temporal para almacenar los datos de la fila actual
                 for (SQLUSMALLINT i = 1; i <= columns; i++) {
+                    // Iteramos sobre cada columna de la fila actual.
                     SQLCHAR[512] buf;
+                    // Declaramos un buffer para almacenar los datos de la columna.
                     SQLLEN indicator;
+                    // Declaramos una variable para almacenar el tamaño del dato recuperado o indicar si es NULL.
                     ret = SQLGetData(stmt, i, SQL_C_CHAR, cast(SQLPOINTER) buf.ptr, buf.length, &indicator);
+                    // Obtenemos los datos de la columna 'i' de la fila actual.
+                    // Los datos se almacenan en el buffer 'buf' y 'indicator' se usa para verificar si los datos son NULL.
                     if (SQL_SUCCEEDED(ret)) {
+                        // Si la obtención de datos fue exitosa, continuamos.
                         if (indicator == SQL_NULL_DATA) {
-                            write("\tNULL");
+                            // Si el 'indicator' indica que el dato es NULL, agregamos "NULL" al arreglo temporal.
+                            fila ~= "NULL";
                         } else {
-                            write("\t", fromStringz(cast(char*) buf.ptr));
+                            // Si el dato no es NULL, lo convertimos de una cadena C a una cadena D y lo agregamos al arreglo temporal.
+                            fila ~= to!string(fromStringz(cast(char*) buf.ptr));
                         }
                     }
                 }
-                writeln();
+                respuesta_SQL ~= fila; // Agregamos la fila completa a la lista de respuestas
             }
         } else {
+            // Si la ejecución de la consulta SQL falló, imprimimos un mensaje de error.
             stderr.writefln("Failed to execute query. SQL return code: %d", ret);
+            
             writeErrorMessage(stmt);
+            // Llamamos a la función writeErrorMessage para obtener y mostrar un mensaje de error detallado.
+        }
+
+        // Ahora puedes imprimir la lista completa de respuestas si lo deseas
+        foreach (fila; respuesta_SQL) {
+            writeln(fila);
         }
 
         // Free the statement handle
