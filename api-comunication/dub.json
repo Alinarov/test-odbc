@@ -1,0 +1,12 @@
+{
+	"authors": [
+		"dani"
+	],
+	"copyright": "Copyright © 2024, dani",
+	"dependencies": {
+		"odbc": "~>1.0.0"
+	},
+	"description": "Aqui es para hacer pruebas con dub",
+	"license": "proprietary",
+	"name": "pruebas"
+}
