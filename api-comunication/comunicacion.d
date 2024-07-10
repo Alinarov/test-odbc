@@ -20,7 +20,7 @@ alias print = writeln;
 	alias SQLLEN = int;  // Usamos `int` en lugar de `long` para SQLLEN
 	SQLHENV env = SQL_NULL_HENV;
 	SQLHDBC conn = SQL_NULL_HDBC;
-	
+	SQLHSTMT stmt;
 	SQLRETURN ret;
 
 	this() {
@@ -112,10 +112,8 @@ alias print = writeln;
 
 
 			
-			// Aqui solo desconectamos el handle osea el cursor que equivale en cursor.close() python
-			SQLFreeHandle(SQL_HANDLE_STMT, stmt);
-
-
+			SQLFreeHandle(SQL_HANDLE_STMT, stmt);	
+			SQLDisconnect(conn);
 			return respuesta_SQL;
 
 
@@ -123,7 +121,7 @@ alias print = writeln;
 			stderr.writefln("Failed to connect to database. SQL return code: %d", ret);
 			writeErrorMessage();
 		}
-		return [["No se pudo conectar a la base de datos"]];
+		return [["No se pudo conectar a la base de datos, revisa bien tu comando:\n " ~ comando]];
 	}
 
 
@@ -151,7 +149,10 @@ alias print = writeln;
 	    }
 	}
 
-	void cerrar_conexion() {
+	void cerrar_conexion_servidor() {
+		// Aqui solo desconectamos el handle osea el cursor que equivale en cursor.close() python
+			
+		SQLFreeHandle(SQL_HANDLE_STMT, stmt);
 		// Esta funcion no usar a no ser que sea necesario, cierra la conexion con el servidor
         SQLDisconnect(conn);
         SQLFreeHandle(SQL_HANDLE_DBC, conn);
